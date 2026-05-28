@@ -33,7 +33,7 @@
                 </div>
             </div>
 
-            <form method="POST" action="/admin/products" class="admin-form">
+            <form method="POST" action="<?= BASE_PATH ?>/admin/products" class="admin-form">
                 <label>
                     Nombre del producto
                     <input type="text" name="name" placeholder="Café con leche" required />
@@ -103,7 +103,7 @@
                 </div>
             </div>
 
-            <form method="POST" action="/admin/import" enctype="multipart/form-data" class="admin-form">
+            <form method="POST" action="<?= BASE_PATH ?>/admin/import" enctype="multipart/form-data" class="admin-form">
                 <label>
                     Archivo CSV
                     <input type="file" name="catalog_file" accept=".csv,text/csv" required />
@@ -121,7 +121,7 @@
                     <p class="eyebrow">Pedidos</p>
                     <h2>Administrar pedidos</h2>
                 </div>
-                <a class="btn btn-secondary" href="/admin/orders">Ver todos</a>
+                <a class="btn btn-secondary" href="<?= BASE_PATH ?>/admin/orders">Ver todos</a>
             </div>
 
             <div class="order-table-wrap">
@@ -151,7 +151,7 @@
                                 <td><?= (int) $order['quantity'] ?></td>
                                 <td><span class="status-badge status-<?= htmlspecialchars($order['status']) ?>"><?= htmlspecialchars($order['status']) ?></span></td>
                                 <td>
-                                    <form method="POST" action="/admin/orders" class="inline-status-form">
+                                    <form method="POST" action="<?= BASE_PATH ?>/admin/orders" class="inline-status-form">
                                         <input type="hidden" name="order_id" value="<?= (int) $order['id'] ?>" />
                                         <select name="status" class="order-status-select">
                                             <option value="pendiente" <?= $order['status'] === 'pendiente' ? 'selected' : '' ?>>Pendiente</option>

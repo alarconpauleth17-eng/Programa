@@ -7,163 +7,121 @@ use PDOException;
 
 class Database
 {
+    private static ?PDO $pdo = null;
+
+    // Configuración de conexión MySQL (XAMPP)
+    private static string $host = 'localhost';
+    private static string $port = '3306';
+    private static string $dbName = 'programa_cafeteria';
+    private static string $user = 'root';
+    private static string $password = '';
+    private static string $charset = 'utf8mb4';
+
+    /**
+     * Retorna la conexión PDO a MySQL.
+     * Crea la base de datos si no existe.
+     */
     public static function connection(): PDO
     {
-        static $pdo = null;
-
-        if ($pdo === null) {
-            $dbPath = dirname(__DIR__) . DIRECTORY_SEPARATOR . 'storage' . DIRECTORY_SEPARATOR . 'app.sqlite';
-            $dir = dirname($dbPath);
-            if (!is_dir($dir)) {
-                mkdir($dir, 0777, true);
+        if (self::$pdo === null) {
+            // Primero conectar sin BD para crearla si no existe
+            $dsn = "mysql:host=" . self::$host . ";port=" . self::$port . ";charset=" . self::$charset;
+            try {
+                $tmp = new PDO($dsn, self::$user, self::$password);
+                $tmp->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+                $tmp->exec("CREATE DATABASE IF NOT EXISTS `" . self::$dbName . "` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci");
+                $tmp = null;
+            } catch (PDOException $e) {
+                die("Error al conectar con MySQL: " . $e->getMessage());
             }
 
-            $pdo = new PDO('sqlite:' . $dbPath);
-            $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-            $pdo->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
+            // Conectar a la base de datos
+            $dsnDb = "mysql:host=" . self::$host . ";port=" . self::$port . ";dbname=" . self::$dbName . ";charset=" . self::$charset;
+            try {
+                self::$pdo = new PDO($dsnDb, self::$user, self::$password);
+                self::$pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+                self::$pdo->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
+
+                // Verificar si las tablas existen, si no, crearlas
+                self::ensureTablesExist();
+            } catch (PDOException $e) {
+                die("Error al conectar con la base de datos: " . $e->getMessage());
+            }
         }
 
-        return $pdo;
+        return self::$pdo;
     }
 
-    public static function initialize(): void
+    private static function ensureTablesExist(): void
     {
-        $pdo = self::connection();
+        try {
+            $result = self::$pdo->query("SHOW TABLES LIKE 'users'");
+            if ($result->rowCount() == 0) {
+                // Si no existe la tabla users, asumimos que faltan todas y ejecutamos migración básica
+                self::runBasicMigration();
+            }
+        } catch (PDOException $e) {
+            // Error al verificar, intentar migrar de todos modos
+            self::runBasicMigration();
+        }
+    }
 
-        $pdo->exec("CREATE TABLE IF NOT EXISTS users (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            name TEXT NOT NULL,
-            email TEXT NOT NULL UNIQUE,
-            password TEXT NOT NULL,
-            role TEXT NOT NULL DEFAULT 'user',
-            created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
-        )");
+    private static function runBasicMigration(): void
+    {
+        // SQL para crear tablas (reutilizado de migrate.php)
+        $queries = [
+            "CREATE TABLE IF NOT EXISTS users (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                name VARCHAR(255) NOT NULL,
+                email VARCHAR(255) NOT NULL UNIQUE,
+                password VARCHAR(255) NOT NULL,
+                role VARCHAR(50) NOT NULL DEFAULT 'user',
+                created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci",
 
-        $pdo->exec("CREATE TABLE IF NOT EXISTS products (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            name TEXT NOT NULL,
-            description TEXT NOT NULL,
-            price REAL NOT NULL DEFAULT 0,
-            category TEXT NOT NULL,
-            whatsapp TEXT NOT NULL,
-            icon TEXT NOT NULL,
-            status TEXT NOT NULL DEFAULT 'activo',
-            created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
-            updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
-        )");
+            "CREATE TABLE IF NOT EXISTS products (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                name VARCHAR(255) NOT NULL,
+                description TEXT NOT NULL,
+                price DECIMAL(10,2) NOT NULL DEFAULT 0.00,
+                category VARCHAR(100) NOT NULL,
+                whatsapp VARCHAR(20) NOT NULL,
+                icon VARCHAR(50) NOT NULL,
+                status VARCHAR(50) NOT NULL DEFAULT 'activo',
+                created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci",
 
-        $pdo->exec("CREATE TABLE IF NOT EXISTS orders (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            customer_name TEXT NOT NULL,
-            customer_phone TEXT NOT NULL,
-            product_id INTEGER,
-            product_name TEXT NOT NULL,
-            quantity INTEGER NOT NULL DEFAULT 1,
-            status TEXT NOT NULL DEFAULT 'pendiente',
-            notes TEXT,
-            created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
-        )");
-
-        $adminEmail = 'admin@cafeteria.local';
-        $adminPassword = password_hash('admin123', PASSWORD_BCRYPT);
-        $stmt = $pdo->prepare('INSERT OR IGNORE INTO users (name, email, password, role) VALUES (:name, :email, :password, :role)');
-        $stmt->execute([
-            ':name' => 'Administrador',
-            ':email' => $adminEmail,
-            ':password' => $adminPassword,
-            ':role' => 'admin',
-        ]);
-
-        $seedProducts = [
-            [
-                'name' => 'Café Especial',
-                'description' => 'Café aromático con espuma y un toque de canela.',
-                'price' => 4500,
-                'category' => 'Bebidas',
-                'whatsapp' => '573001234567',
-                'icon' => '☕',
-            ],
-            [
-                'name' => 'Croissant Dulce',
-                'description' => 'Croissant fresco con azúcar y mantequilla.',
-                'price' => 3200,
-                'category' => 'Panadería',
-                'whatsapp' => '573001234567',
-                'icon' => '🥐',
-            ],
-            [
-                'name' => 'Combo Snack',
-                'description' => 'Paquete de snacks con bebida y postre.',
-                'price' => 7800,
-                'category' => 'Snacks',
-                'whatsapp' => '573001234567',
-                'icon' => '🍪',
-            ],
+            "CREATE TABLE IF NOT EXISTS orders (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                customer_name VARCHAR(255) NOT NULL,
+                customer_phone VARCHAR(20) NOT NULL,
+                product_id INT,
+                product_name VARCHAR(255) NOT NULL,
+                quantity INT NOT NULL DEFAULT 1,
+                status VARCHAR(50) NOT NULL DEFAULT 'pendiente',
+                notes TEXT,
+                created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE SET NULL
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci"
         ];
 
-        foreach ($seedProducts as $product) {
-            $check = $pdo->prepare('SELECT id FROM products WHERE name = :name');
-            $check->execute([':name' => $product['name']]);
-            if ($check->fetch()) {
-                continue;
-            }
-
-            $stmt = $pdo->prepare('INSERT INTO products (name, description, price, category, whatsapp, icon, status) VALUES (:name, :description, :price, :category, :whatsapp, :icon, :status)');
-            $stmt->execute([
-                ':name' => $product['name'],
-                ':description' => $product['description'],
-                ':price' => $product['price'],
-                ':category' => $product['category'],
-                ':whatsapp' => $product['whatsapp'],
-                ':icon' => $product['icon'],
-                ':status' => 'activo',
-            ]);
+        foreach ($queries as $query) {
+            self::$pdo->exec($query);
         }
 
-        $sampleProductId = $pdo->query('SELECT id FROM products WHERE name = "Café Especial"')->fetchColumn();
-        if ($sampleProductId) {
-            $seedOrders = [
-                [
-                    'customer_name' => 'María López',
-                    'customer_phone' => '573001112233',
-                    'product_id' => $sampleProductId,
-                    'product_name' => 'Café Especial',
-                    'quantity' => 2,
-                    'status' => 'pendiente',
-                    'notes' => 'Entrega en la mañana',
-                ],
-                [
-                    'customer_name' => 'Carlos Ruiz',
-                    'customer_phone' => '573009998877',
-                    'product_id' => $sampleProductId,
-                    'product_name' => 'Café Especial',
-                    'quantity' => 1,
-                    'status' => 'confirmado',
-                    'notes' => 'Recojo en tienda',
-                ],
-            ];
-
-            foreach ($seedOrders as $order) {
-                $checkOrder = $pdo->prepare('SELECT id FROM orders WHERE customer_name = :customer_name AND product_name = :product_name LIMIT 1');
-                $checkOrder->execute([
-                    ':customer_name' => $order['customer_name'],
-                    ':product_name' => $order['product_name'],
-                ]);
-                if ($checkOrder->fetch()) {
-                    continue;
-                }
-
-                $orderStmt = $pdo->prepare('INSERT INTO orders (customer_name, customer_phone, product_id, product_name, quantity, status, notes) VALUES (:customer_name, :customer_phone, :product_id, :product_name, :quantity, :status, :notes)');
-                $orderStmt->execute([
-                    ':customer_name' => $order['customer_name'],
-                    ':customer_phone' => $order['customer_phone'],
-                    ':product_id' => $order['product_id'],
-                    ':product_name' => $order['product_name'],
-                    ':quantity' => $order['quantity'],
-                    ':status' => $order['status'],
-                    ':notes' => $order['notes'],
-                ]);
-            }
+        // Insertar admin por defecto si no existe
+        $adminEmail = 'admin@cafeteria.local';
+        $check = self::$pdo->prepare('SELECT id FROM users WHERE email = :email');
+        $check->execute([':email' => $adminEmail]);
+        if (!$check->fetch()) {
+            $stmt = self::$pdo->prepare('INSERT INTO users (name, email, password, role) VALUES (:name, :email, :password, :role)');
+            $stmt->execute([
+                ':name'     => 'Administrador',
+                ':email'    => $adminEmail,
+                ':password' => password_hash('admin123', PASSWORD_BCRYPT),
+                ':role'     => 'admin',
+            ]);
         }
     }
 }

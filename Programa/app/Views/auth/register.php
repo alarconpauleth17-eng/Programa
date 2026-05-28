@@ -7,7 +7,7 @@
             <h1>Crear cuenta</h1>
             <p class="auth-copy">Regístrate para acceder al catálogo, guardar tu preferencia y comprar con WhatsApp.</p>
 
-            <form method="POST" action="/register" class="auth-form">
+            <form method="POST" action="<?= BASE_PATH ?>/register" class="auth-form">
                 <label>
                     Nombre completo
                     <input type="text" name="name" placeholder="Juan Pérez" required />
@@ -31,7 +31,7 @@
                 <button type="submit" class="btn btn-primary full">Crear cuenta</button>
             </form>
 
-            <p class="auth-note">¿Ya tienes cuenta? <a href="/login">Inicia sesión</a></p>
+            <p class="auth-note">¿Ya tienes cuenta? <a href="<?= BASE_PATH ?>/login">Inicia sesión</a></p>
         </div>
     </div>
 </section>

@@ -1,6 +1,8 @@
 <?php
 session_start();
 
+define('BASE_PATH', '/Programa/Programa');
+
 spl_autoload_register(function ($class) {
     $prefix = 'App\\';
     $baseDir = __DIR__ . DIRECTORY_SEPARATOR;
@@ -18,5 +20,3 @@ spl_autoload_register(function ($class) {
 });
 
 require __DIR__ . '/Database.php';
-
-App\Database::initialize();

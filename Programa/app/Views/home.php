@@ -8,7 +8,7 @@
             <p class="lead">Nuestro catálogo se actualiza dinámicamente y convierte cada selección en un contacto rápido con el vendedor para cerrar tu pedido.</p>
             <div class="hero-actions">
                 <a class="btn btn-primary" href="#catalogo">Ver catálogo</a>
-                <a class="btn btn-secondary" href="/register">Crear cuenta</a>
+                <a class="btn btn-secondary" href="<?= BASE_PATH ?>/register">Crear cuenta</a>
             </div>
             <ul class="hero-points">
                 <li>✓ Gestión de productos</li>

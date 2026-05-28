@@ -11,6 +11,10 @@ class Router
 {
     public function dispatch(string $uri, string $method): void
     {
+        $base = defined('BASE_PATH') ? BASE_PATH : '';
+        if ($base !== '' && str_starts_with($uri, $base)) {
+            $uri = substr($uri, strlen($base));
+        }
         $uri = trim($uri, '/');
         $segments = $uri === '' ? [] : array_filter(explode('/', $uri));
 

@@ -7,7 +7,7 @@
             <h1>Iniciar sesión</h1>
             <p class="auth-copy">Ingresa tus credenciales para administrar tus pedidos o revisar el catálogo.</p>
 
-            <form method="POST" action="/login" class="auth-form">
+            <form method="POST" action="<?= BASE_PATH ?>/login" class="auth-form">
                 <label>
                     Correo electrónico
                     <input type="email" name="email" placeholder="tu@correo.com" required />
@@ -21,7 +21,7 @@
                 <button type="submit" class="btn btn-primary full">Ingresar</button>
             </form>
 
-            <p class="auth-note">¿No tienes cuenta? <a href="/register">Regístrate aquí</a></p>
+            <p class="auth-note">¿No tienes cuenta? <a href="<?= BASE_PATH ?>/register">Regístrate aquí</a></p>
         </div>
     </div>
 </section>

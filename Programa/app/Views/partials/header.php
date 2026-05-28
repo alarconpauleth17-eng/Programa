@@ -9,20 +9,20 @@ unset($_SESSION['flash']);
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title><?= htmlspecialchars($pageTitle ?? 'Cafetería Dinámica') ?></title>
-    <link rel="stylesheet" href="/assets/style.css" />
+    <link rel="stylesheet" href="<?= BASE_PATH ?>/assets/style.css" />
 </head>
 <body>
 <header class="site-header">
     <div class="container nav-wrap">
-        <a class="brand" href="/">
+        <a class="brand" href="<?= BASE_PATH ?>/">
             <span class="brand-icon">☕</span>
             <span>Delicias del Barrio</span>
         </a>
 
         <nav class="site-nav">
-            <a href="/">Inicio</a>
+            <a href="<?= BASE_PATH ?>/">Inicio</a>
             <?php if ($user && ($user['role'] ?? '') === 'admin'): ?>
-                <a href="/admin">Administración</a>
+                <a href="<?= BASE_PATH ?>/admin">Administración</a>
             <?php endif; ?>
         </nav>
 
@@ -30,12 +30,12 @@ unset($_SESSION['flash']);
             <?php if ($user): ?>
                 <span class="user-pill">Hola, <?= htmlspecialchars($user['name']) ?></span>
                 <?php if (($user['role'] ?? '') === 'admin'): ?>
-                    <a class="btn btn-secondary" href="/admin">Dashboard</a>
+                    <a class="btn btn-secondary" href="<?= BASE_PATH ?>/admin">Dashboard</a>
                 <?php endif; ?>
-                <a class="btn btn-secondary" href="/logout">Cerrar sesión</a>
+                <a class="btn btn-secondary" href="<?= BASE_PATH ?>/logout">Cerrar sesión</a>
             <?php else: ?>
-                <a class="btn btn-secondary" href="/login">Entrar</a>
-                <a class="btn btn-primary" href="/register">Registrarse</a>
+                <a class="btn btn-secondary" href="<?= BASE_PATH ?>/login">Entrar</a>
+                <a class="btn btn-primary" href="<?= BASE_PATH ?>/register">Registrarse</a>
             <?php endif; ?>
         </div>
     </div>

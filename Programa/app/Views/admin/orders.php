@@ -47,7 +47,7 @@
                                 <td><span class="status-badge status-<?= htmlspecialchars($order['status']) ?>"><?= htmlspecialchars($order['status']) ?></span></td>
                                 <td><?= htmlspecialchars($order['created_at']) ?></td>
                                 <td>
-                                    <form method="POST" action="/admin/orders" class="inline-status-form">
+                                    <form method="POST" action="<?= BASE_PATH ?>/admin/orders" class="inline-status-form">
                                         <input type="hidden" name="order_id" value="<?= (int) $order['id'] ?>" />
                                         <select name="status" class="order-status-select">
                                             <option value="pendiente" <?= $order['status'] === 'pendiente' ? 'selected' : '' ?>>Pendiente</option>
